@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-K-Project ("ระบบติดตามการเบิกของ") is a Thai-language internal tool for logging incidents where an
+StockWatch ("ระบบติดตามการเบิกของ") is a Thai-language internal tool for logging incidents where an
 employee needed a supply/tool but didn't requisition it properly. Plain PHP 8.2 + MySQL 8, no framework,
 no Composer dependencies, no build step, no test suite.
 
@@ -47,7 +47,7 @@ volume is created**. `db/migration_002_items_external.sql`, `db/migration_003_re
 `db/fix_items_encoding.sql` are historical migrations already folded into `init.sql` — they're kept for
 reference, not auto-applied. If you change the schema, update `init.sql` directly (fresh volumes) and add
 a new migration file for anyone running against an existing `db_data` volume (apply manually via
-phpMyAdmin or `docker exec -i kproject_db mysql -uroot -prootpassword stock_tracker < db/your_migration.sql`).
+phpMyAdmin or `docker exec -i stockwatch_db mysql -uroot -prootpassword stock_tracker < db/your_migration.sql`).
 
 Core tables: `users` (admin/manager login), `employees`, `item_categories`, `items`, `reasons`,
 `incidents`. An `incidents` row is tied to *either* an internal `employee_id` *or* a free-text

@@ -10,7 +10,7 @@
 services:
   db:
     image: mysql:8.0
-    container_name: kproject_db
+    container_name: stockwatch_db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
@@ -21,11 +21,11 @@ services:
       - db_data:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      - kproject_net
+      - stockwatch_net
 
   web:
     build: ./php
-    container_name: kproject_web
+    container_name: stockwatch_web
     restart: unless-stopped
     environment:
       DB_HOST: db
@@ -37,11 +37,11 @@ services:
     depends_on:
       - db
     networks:
-      - kproject_net
+      - stockwatch_net
 
   caddy:
     image: caddy:2-alpine
-    container_name: kproject_caddy
+    container_name: stockwatch_caddy
     restart: unless-stopped
     environment:
       APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN in .env}
@@ -56,11 +56,11 @@ services:
     depends_on:
       - web
     networks:
-      - kproject_net
+      - stockwatch_net
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: kproject_phpmyadmin
+    container_name: stockwatch_phpmyadmin
     restart: unless-stopped
     environment:
       PMA_HOST: db
@@ -70,7 +70,7 @@ services:
     depends_on:
       - db
     networks:
-      - kproject_net
+      - stockwatch_net
 
 volumes:
   db_data:
@@ -78,4 +78,4 @@ volumes:
   caddy_config:
 
 networks:
-  kproject_net:
+  stockwatch_net:

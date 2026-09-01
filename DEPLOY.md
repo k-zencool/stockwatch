@@ -1,4 +1,4 @@
-# Deploying K-Project on an Oracle Cloud Always Free VM
+# Deploying StockWatch on an Oracle Cloud Always Free VM
 
 Single-user deployment, free forever, reachable 24/7 over HTTPS.
 Everything below is done once; afterwards updating is `git pull` + one `docker compose` command.
@@ -64,19 +64,19 @@ exit          # log out and back in so the group membership applies
 
 HTTPS certificates are issued for domain names, not bare IP addresses.
 Register a free subdomain at <https://www.duckdns.org> (sign in with Google/GitHub),
-create e.g. `kproject.duckdns.org`, and point it at the VM's public IP.
+create e.g. `stockwatch.duckdns.org`, and point it at the VM's public IP.
 
 Check that it resolves before continuing:
 
 ```bash
-ping -c1 kproject.duckdns.org
+ping -c1 stockwatch.duckdns.org
 ```
 
 ## 6. Upload the project
 
 ```bash
-git clone <your-repo-url> ~/k-project     # or: scp -r the folder from your PC
-cd ~/k-project
+git clone <your-repo-url> ~/stockwatch     # or: scp -r the folder from your PC
+cd ~/stockwatch
 ```
 
 ## 7. Configure secrets
@@ -125,20 +125,20 @@ locks that IP out for 15 minutes).
 **Deploy a change**
 
 ```bash
-cd ~/k-project && git pull
+cd ~/stockwatch && git pull
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 **Back up the database** (do this before any schema change)
 
 ```bash
-docker exec kproject_db mysqldump -uroot -p"$DB_ROOT_PASSWORD" stock_tracker > backup-$(date +%F).sql
+docker exec stockwatch_db mysqldump -uroot -p"$DB_ROOT_PASSWORD" stock_tracker > backup-$(date +%F).sql
 ```
 
 **Restore**
 
 ```bash
-docker exec -i kproject_db mysql -uroot -p"$DB_ROOT_PASSWORD" stock_tracker < backup-2026-09-01.sql
+docker exec -i stockwatch_db mysql -uroot -p"$DB_ROOT_PASSWORD" stock_tracker < backup-2026-09-01.sql
 ```
 
 **Reach phpMyAdmin** — it is deliberately bound to loopback, so it is not on the internet.
@@ -151,7 +151,7 @@ ssh -i /path/to/private-key -L 8081:localhost:8081 ubuntu@<VM-PUBLIC-IP>
 **Apply a migration** (files in `db/`; `init.sql` only runs on a brand-new volume)
 
 ```bash
-docker exec -i kproject_db mysql -uroot -p"$DB_ROOT_PASSWORD" stock_tracker < db/migration_00X_name.sql
+docker exec -i stockwatch_db mysql -uroot -p"$DB_ROOT_PASSWORD" stock_tracker < db/migration_00X_name.sql
 ```
 
 ---
