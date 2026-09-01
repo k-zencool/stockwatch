@@ -88,7 +88,20 @@ nano .env
 ```
 
 Fill in `APP_DOMAIN` (the DuckDNS name), `ACME_EMAIL`, and both passwords.
-`.env` is gitignored — it must never be committed.
+`.env` is gitignored — it must never be committed. Put the real values in `.env`, not in
+`.env.example`, which is tracked by git.
+
+Two settings that will silently break the stack:
+
+- **`DB_USER` must not be `root`.** MySQL's entrypoint refuses it (`MYSQL_USER and
+  MYSQL_PASSWORD are for configuring a regular user and cannot be used for the root user`),
+  the container then crash-loops, and the app shows
+  `getaddrinfo for db failed: Temporary failure in name resolution` — because the `db`
+  container isn't running to be resolved, which reads like a network problem but isn't.
+- **Give `DB_PASS` and `DB_ROOT_PASSWORD` different values.** The app user only needs its
+  own database; root can drop everything.
+
+Also `chmod 600 .env` so it isn't world-readable on the server.
 
 ## 8. Start it
 
