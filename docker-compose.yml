@@ -1,0 +1,56 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: kproject_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: stock_tracker
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "3307:3306"
+    networks:
+      - kproject_net
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: kproject_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - kproject_net
+
+  web:
+    build: ./php
+    container_name: kproject_web
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_NAME: stock_tracker
+      DB_USER: appuser
+      DB_PASS: apppassword
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - kproject_net
+
+volumes:
+  db_data:
+
+networks:
+  kproject_net:
