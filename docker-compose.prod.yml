@@ -1,0 +1,81 @@
+# Production stack for a single-user deployment (e.g. an Oracle Cloud Always Free VM).
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Differences from the local docker-compose.yml:
+#   - every credential comes from .env instead of being written in this file
+#   - MySQL and PHP publish no host ports; only Caddy is reachable from the internet
+#   - Caddy terminates HTTPS and gets/renews the certificate automatically
+#   - phpMyAdmin listens on 127.0.0.1 only, so it needs an SSH tunnel to reach
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: kproject_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${DB_NAME:?set DB_NAME in .env}
+      MYSQL_USER: ${DB_USER:?set DB_USER in .env}
+      MYSQL_PASSWORD: ${DB_PASS:?set DB_PASS in .env}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - kproject_net
+
+  web:
+    build: ./php
+    container_name: kproject_web
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - kproject_net
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: kproject_caddy
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    networks:
+      - kproject_net
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: kproject_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+    ports:
+      # Loopback only: reach it with `ssh -L 8081:localhost:8081 ubuntu@<server-ip>`
+      - "127.0.0.1:8081:80"
+    depends_on:
+      - db
+    networks:
+      - kproject_net
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  kproject_net:

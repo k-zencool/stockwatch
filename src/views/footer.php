@@ -8,6 +8,6 @@
     <a href="reports.php" class="<?= ($activeNav ?? '') === 'reports' ? 'active' : '' ?>"><?= icon('chart') ?><span>รายงาน</span></a>
   </nav>
 </div>
-<script src="assets/js/app.js"></script>
+<script src="<?= asset('assets/js/app.js') ?>"></script>
 </body>
 </html>

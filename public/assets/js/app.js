@@ -19,6 +19,49 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
+ * Pins an open .combobox-menu to its input using fixed coordinates, so the menu is
+ * never clipped by a scrolling ancestor (e.g. .modal-body inside a dialog).
+ * Flips the menu above the input when there isn't room below.
+ */
+function positionFloating(anchor, el, matchWidth) {
+  var rect = anchor.getBoundingClientRect();
+
+  el.style.position = 'fixed';
+  el.style.right = 'auto';
+  if (matchWidth) el.style.width = rect.width + 'px';
+
+  // Keep it on screen horizontally, preferring left-alignment with the anchor.
+  var left = rect.left;
+  if (left + el.offsetWidth > window.innerWidth - 12) {
+    left = Math.max(12, window.innerWidth - el.offsetWidth - 12);
+  }
+  el.style.left = left + 'px';
+
+  // Flip above the anchor when there isn't room below.
+  var height = el.offsetHeight;
+  if (window.innerHeight - rect.bottom < height + 12 && rect.top > height + 12) {
+    el.style.top = (rect.top - height - 6) + 'px';
+  } else {
+    el.style.top = (rect.bottom + 6) + 'px';
+  }
+}
+
+function positionComboboxMenu(anchor, menu) {
+  positionFloating(anchor, menu, true);
+}
+
+/**
+ * Keeps an open menu glued to its input while the page or a container scrolls.
+ */
+function trackComboboxMenu(anchor, menu) {
+  function reposition() {
+    if (menu.classList.contains('open')) positionComboboxMenu(anchor, menu);
+  }
+  window.addEventListener('scroll', reposition, true);
+  window.addEventListener('resize', reposition);
+}
+
+/**
  * Searchable item picker: type to filter, click a suggestion to bind item_id.
  * Category is derived from the picked item — the catalog is the source of truth,
  * there is no manual category field.
@@ -57,6 +100,7 @@ function initItemCombobox(root, items) {
       empty.textContent = query ? 'ไม่พบในคลัง — จะบันทึกเป็นรายการใหม่ตามที่พิมพ์' : 'พิมพ์เพื่อค้นหารายการในคลัง';
       menu.appendChild(empty);
       menu.classList.add('open');
+      positionComboboxMenu(searchInput, menu);
       return;
     }
     list.forEach(function (it) {
@@ -77,6 +121,7 @@ function initItemCombobox(root, items) {
       menu.appendChild(row);
     });
     menu.classList.add('open');
+    positionComboboxMenu(searchInput, menu);
   }
 
   searchInput.addEventListener('input', function () {
@@ -97,25 +142,304 @@ function initItemCombobox(root, items) {
   document.addEventListener('click', function (e) {
     if (!root.contains(e.target)) closeMenu();
   });
+
+  trackComboboxMenu(searchInput, menu);
 }
 
 /**
- * Toggles an "external employee" fieldset when a select's value equals "other".
+ * Row "edit" buttons that open a shared dialog instead of a separate page.
+ * The button carries the row's values as data-field-<inputName> attributes, plus
+ * data-id, data-active and (optionally) data-incidents.
  */
-function initEmployeeToggle(selectId, boxId) {
-  var select = document.getElementById(selectId);
-  var box = document.getElementById(boxId);
-  if (!select || !box) return;
+function initRowEditModals() {
+  document.querySelectorAll('[data-edit-modal]').forEach(function (btn) {
+    var modal = document.getElementById(btn.getAttribute('data-edit-modal'));
+    if (!modal) return;
 
-  function sync() {
-    if (select.value === 'other') {
-      box.style.display = '';
-    } else {
-      box.style.display = 'none';
-      box.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+    btn.addEventListener('click', function () {
+      modal.querySelectorAll('input[name="id"]').forEach(function (input) {
+        input.value = btn.getAttribute('data-id');
+      });
+
+      Array.prototype.forEach.call(btn.attributes, function (attr) {
+        if (attr.name.indexOf('data-field-') !== 0) return;
+        var field = modal.querySelector('[name="' + attr.name.slice(11) + '"]');
+        if (!field) return;
+        field.value = attr.value;
+        // Let the themed dropdown redraw its label.
+        if (field.tagName === 'SELECT') field.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      var isActive = btn.getAttribute('data-active') === '1';
+      var toggle = modal.querySelector('[data-toggle-btn]');
+      if (toggle) {
+        toggle.textContent = toggle.getAttribute(isActive ? 'data-label-off' : 'data-label-on');
+        toggle.classList.toggle('btn-danger-outline', isActive);
+        toggle.classList.toggle('btn-secondary', !isActive);
+      }
+
+      var count = btn.getAttribute('data-incidents');
+      if (count !== null) {
+        modal.querySelectorAll('[data-incident-count]').forEach(function (el) {
+          el.textContent = count;
+        });
+      }
+
+      if (modal.showModal) modal.showModal();
+    });
+  });
+}
+
+/**
+ * Progressive enhancement for every <select> in a form: the native control is kept
+ * (hidden) so the value still submits and existing change listeners still fire,
+ * while a themed button + option list is drawn on top of it. Without JS the plain
+ * <select> keeps working.
+ */
+function initStyledSelects(scope) {
+  var selects = (scope || document).querySelectorAll('.grid-form select, .filter-form select, .filter-menu-panel select');
+
+  Array.prototype.forEach.call(selects, function (select) {
+    if (select.getAttribute('data-styled')) return;
+    select.setAttribute('data-styled', '1');
+
+    var wrap = document.createElement('div');
+    wrap.className = 'styled-select';
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'styled-select-button';
+    var label = document.createElement('span');
+    button.appendChild(label);
+    wrap.appendChild(button);
+
+    var menu = document.createElement('div');
+    menu.className = 'styled-select-menu';
+    wrap.appendChild(menu);
+
+    function syncLabel() {
+      var opt = select.options[select.selectedIndex];
+      label.textContent = opt ? opt.textContent : '';
+      button.classList.toggle('is-placeholder', !opt || opt.value === '');
     }
+
+    function closeMenu() {
+      menu.classList.remove('open');
+      button.setAttribute('aria-expanded', 'false');
+    }
+
+    function openMenu() {
+      menu.innerHTML = '';
+      Array.prototype.forEach.call(select.options, function (opt) {
+        var row = document.createElement('div');
+        row.className = 'styled-select-option' + (opt.selected ? ' selected' : '');
+        row.textContent = opt.textContent;
+        row.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          select.value = opt.value;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          syncLabel();
+          closeMenu();
+        });
+        menu.appendChild(row);
+      });
+      menu.classList.add('open');
+      button.setAttribute('aria-expanded', 'true');
+      positionComboboxMenu(button, menu);
+    }
+
+    button.addEventListener('click', function () {
+      if (menu.classList.contains('open')) closeMenu(); else openMenu();
+    });
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) closeMenu();
+    });
+    select.addEventListener('change', syncLabel);
+
+    trackComboboxMenu(button, menu);
+    syncLabel();
+  });
+}
+
+/**
+ * Forms marked [data-autosubmit] re-submit as soon as a select or date field changes,
+ * so filters apply without a separate "apply" button. Text inputs are left alone —
+ * they submit on Enter.
+ */
+function initAutoSubmit() {
+  document.querySelectorAll('form[data-autosubmit]').forEach(function (form) {
+    form.addEventListener('change', function (e) {
+      var field = e.target;
+      if (field.tagName === 'SELECT' || field.type === 'date') {
+        if (form.requestSubmit) form.requestSubmit(); else form.submit();
+      }
+    });
+  });
+}
+
+/**
+ * Buttons with data-menu="<elementId>" open that element as a floating panel anchored
+ * to the button. Closes on outside click, on Escape, and follows the button on scroll.
+ */
+function initMenus() {
+  document.querySelectorAll('[data-menu]').forEach(function (btn) {
+    var panel = document.getElementById(btn.getAttribute('data-menu'));
+    if (!panel) return;
+
+    function close() {
+      panel.hidden = true;
+      btn.classList.remove('is-active');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+
+    function open() {
+      panel.hidden = false;
+      btn.classList.add('is-active');
+      btn.setAttribute('aria-expanded', 'true');
+      positionFloating(btn, panel, false);
+    }
+
+    function reposition() {
+      if (!panel.hidden) positionFloating(btn, panel, false);
+    }
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (panel.hidden) open(); else close();
+    });
+    document.addEventListener('click', function (e) {
+      if (!panel.hidden && !panel.contains(e.target)) close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) close();
+    });
+    window.addEventListener('scroll', reposition, true);
+    window.addEventListener('resize', reposition);
+
+    close();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  initStyledSelects();
+  initMenus();
+  initAutoSubmit();
+});
+
+/**
+ * Wires up buttons/dialogs following the [data-open-modal]/[data-close-modal] convention:
+ * a button with data-open-modal="someId" opens <dialog id="someId" class="modal">;
+ * a [data-close-modal] inside that dialog, or a click on the backdrop, closes it.
+ */
+function initModals() {
+  document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var dialog = document.getElementById(btn.getAttribute('data-open-modal'));
+      if (dialog && dialog.showModal) dialog.showModal();
+    });
+  });
+  document.querySelectorAll('dialog.modal').forEach(function (dialog) {
+    dialog.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+      btn.addEventListener('click', function () { dialog.close(); });
+    });
+    dialog.addEventListener('click', function (e) {
+      if (e.target === dialog) dialog.close();
+    });
+  });
+}
+
+/**
+ * Searchable employee picker. Submits "emp:<id>" or "other" through the hidden
+ * .combobox-value input, and shows/hides the external-employee fieldset to match.
+ * root: element with class "combobox" containing .combobox-value, .combobox-search, .combobox-menu
+ */
+function initEmployeeCombobox(root, employees, externalBoxId) {
+  if (!root) return;
+  var searchInput = root.querySelector('.combobox-search');
+  var hiddenChoice = root.querySelector('.combobox-value');
+  var menu = root.querySelector('.combobox-menu');
+  var externalBox = document.getElementById(externalBoxId);
+
+  function closeMenu() { menu.classList.remove('open'); }
+
+  function showExternal(show) {
+    if (!externalBox) return;
+    externalBox.style.display = show ? '' : 'none';
+    if (!show) externalBox.querySelectorAll('input').forEach(function (input) { input.value = ''; });
   }
 
-  select.addEventListener('change', sync);
-  sync();
+  function selectEmployee(emp) {
+    searchInput.value = emp.full_name + (emp.department ? ' (' + emp.department + ')' : '');
+    hiddenChoice.value = 'emp:' + emp.id;
+    showExternal(false);
+    closeMenu();
+  }
+
+  function selectExternal() {
+    searchInput.value = '';
+    hiddenChoice.value = 'other';
+    showExternal(true);
+    closeMenu();
+  }
+
+  function render(list) {
+    menu.innerHTML = '';
+    list.forEach(function (emp) {
+      var row = document.createElement('div');
+      row.className = 'combobox-item';
+      var nameEl = document.createElement('span');
+      nameEl.className = 'combobox-item-name';
+      nameEl.textContent = emp.full_name;
+      var metaEl = document.createElement('span');
+      metaEl.className = 'combobox-item-meta';
+      metaEl.textContent = emp.department || '';
+      row.appendChild(nameEl);
+      row.appendChild(metaEl);
+      row.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        selectEmployee(emp);
+      });
+      menu.appendChild(row);
+    });
+    if (!list.length) {
+      var empty = document.createElement('div');
+      empty.className = 'combobox-empty';
+      empty.textContent = 'ไม่พบพนักงานในรายชื่อ';
+      menu.appendChild(empty);
+    }
+    var other = document.createElement('div');
+    other.className = 'combobox-item combobox-item-other';
+    other.textContent = '+ พนักงานจากแผนกอื่น (ระบุชื่อเอง)';
+    other.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      selectExternal();
+    });
+    menu.appendChild(other);
+    menu.classList.add('open');
+    positionComboboxMenu(searchInput, menu);
+  }
+
+  searchInput.addEventListener('input', function () {
+    hiddenChoice.value = '';
+    showExternal(false);
+    var q = searchInput.value.trim().toLowerCase();
+    var filtered = !q ? employees.slice(0, 8) : employees.filter(function (emp) {
+      return emp.full_name.toLowerCase().indexOf(q) !== -1 ||
+        (emp.department || '').toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 8);
+    render(filtered);
+  });
+
+  searchInput.addEventListener('focus', function () {
+    searchInput.dispatchEvent(new Event('input'));
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!root.contains(e.target)) closeMenu();
+  });
+
+  trackComboboxMenu(searchInput, menu);
+  showExternal(hiddenChoice.value === 'other');
 }

@@ -19,6 +19,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('employees.php');
     }
 
+    if (($_POST['action'] ?? '') === 'delete') {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM incidents WHERE employee_id = ?');
+        $stmt->execute([$id]);
+        $linkedCount = (int) $stmt->fetchColumn();
+
+        try {
+            $pdo->beginTransaction();
+            if ($linkedCount > 0) {
+                // incidents.employee_id is a RESTRICT foreign key, so the history has to be
+                // detached first. The name/department is copied onto those rows so the
+                // records still say who didn't requisition the item.
+                $stmt = $pdo->prepare(
+                    "UPDATE incidents SET employee_id = NULL, external_name = ?, external_department = ?
+                     WHERE employee_id = ?"
+                );
+                $stmt->execute([$employee['full_name'], $employee['department'], $id]);
+            }
+            $stmt = $pdo->prepare("DELETE FROM employees WHERE id = ?");
+            $stmt->execute([$id]);
+            $pdo->commit();
+        } catch (PDOException $ex) {
+            $pdo->rollBack();
+            flash('error', 'ลบพนักงานไม่สำเร็จ: ' . $ex->getMessage());
+            redirect('employee_edit.php?id=' . $id);
+        }
+
+        flash('success', $linkedCount > 0
+            ? 'ลบพนักงานเรียบร้อยแล้ว — ประวัติ ' . $linkedCount . ' รายการยังอยู่ครบ โดยเก็บชื่อไว้เป็นข้อความแทน'
+            : 'ลบพนักงานเรียบร้อยแล้ว');
+        redirect('employees.php');
+    }
+
     $fullName = trim($_POST['full_name'] ?? '');
     $employeeCode = trim($_POST['employee_code'] ?? '');
     $department = trim($_POST['department'] ?? '');
@@ -26,46 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($fullName === '') {
         flash('error', 'กรุณากรอกชื่อพนักงาน');
-    } else {
-        $stmt = $pdo->prepare(
-            "UPDATE employees SET employee_code=?, full_name=?, department=?, position=? WHERE id=?"
-        );
-        $stmt->execute([$employeeCode ?: null, $fullName, $department ?: null, $position ?: null, $id]);
-        flash('success', 'บันทึกข้อมูลพนักงานเรียบร้อยแล้ว');
-        redirect('employees.php');
+        redirect('employees.php?open=edit&id=' . $id);
     }
+
+    $stmt = $pdo->prepare(
+        "UPDATE employees SET employee_code=?, full_name=?, department=?, position=? WHERE id=?"
+    );
+    $stmt->execute([$employeeCode ?: null, $fullName, $department ?: null, $position ?: null, $id]);
+    flash('success', 'บันทึกข้อมูลพนักงานเรียบร้อยแล้ว');
+    redirect('employees.php');
 }
 
-$pageTitle = 'แก้ไขพนักงาน';
-$activeNav = 'employees';
-require __DIR__ . '/../src/views/header.php';
-?>
-<div class="panel">
-  <div class="panel-header"><h2><?= icon('edit', 'icon icon-sm') ?> แก้ไขข้อมูลพนักงาน</h2></div>
-  <form method="post" class="grid-form">
-    <label>รหัสพนักงาน
-      <input type="text" name="employee_code" value="<?= e($employee['employee_code'] ?? '') ?>">
-    </label>
-    <label>ชื่อ-นามสกุล
-      <input type="text" name="full_name" value="<?= e($employee['full_name']) ?>" required>
-    </label>
-    <label>แผนก
-      <input type="text" name="department" value="<?= e($employee['department'] ?? '') ?>">
-    </label>
-    <label>ตำแหน่ง
-      <input type="text" name="position" value="<?= e($employee['position'] ?? '') ?>">
-    </label>
-    <div class="grid-span-2">
-      <button type="submit" class="btn btn-primary"><?= icon('check-circle', 'icon icon-sm') ?> บันทึกการแก้ไข</button>
-      <a href="employees.php" class="btn btn-ghost"><?= icon('x', 'icon icon-sm') ?> ยกเลิก</a>
-    </div>
-  </form>
-  <form method="post" class="inline-toggle">
-    <input type="hidden" name="action" value="toggle_active">
-    <button type="submit" class="btn <?= $employee['is_active'] ? 'btn-danger-outline' : 'btn-secondary' ?>">
-      <?= $employee['is_active'] ? icon('x', 'icon icon-sm') : icon('check-circle', 'icon icon-sm') ?>
-      <?= $employee['is_active'] ? 'ปิดใช้งาน (พ้นสภาพ)' : 'เปิดใช้งานอีกครั้ง' ?>
-    </button>
-  </form>
-</div>
-<?php require __DIR__ . '/../src/views/footer.php'; ?>
+// The edit UI lives in a dialog on the list page; this file only handles the POSTs.
+redirect('employees.php?open=edit&id=' . $id);

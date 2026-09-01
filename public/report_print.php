@@ -40,7 +40,8 @@ $generatedAt = date('d/m/Y H:i');
 <head>
 <meta charset="UTF-8">
 <title>รายงานสรุป <?= e($dateFrom) ?> ถึง <?= e($dateTo) ?></title>
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" type="image/svg+xml" href="<?= asset('assets/favicon.svg') ?>">
+<link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>">
 </head>
 <body class="print-body">
 <div class="print-toolbar no-print">

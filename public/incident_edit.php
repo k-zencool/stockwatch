@@ -54,7 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$employees = $pdo->query("SELECT id, full_name, department FROM employees ORDER BY full_name")->fetchAll();
+$employees = $pdo->query(
+    "SELECT id, full_name, department FROM employees
+     ORDER BY employee_code IS NULL, employee_code, full_name"
+)->fetchAll();
 $categories = $pdo->query("SELECT id, name FROM item_categories ORDER BY name")->fetchAll();
 $reasons = $pdo->query("SELECT id, name FROM reasons ORDER BY name")->fetchAll();
 $itemsForJs = $pdo->query(
@@ -64,6 +67,13 @@ $itemsForJs = $pdo->query(
 )->fetchAll();
 
 $currentChoice = $incident['employee_id'] ? 'emp:' . $incident['employee_id'] : 'other';
+$currentEmployeeLabel = '';
+foreach ($employees as $emp) {
+    if ($emp['id'] == $incident['employee_id']) {
+        $currentEmployeeLabel = $emp['full_name'] . ($emp['department'] ? ' (' . $emp['department'] . ')' : '');
+        break;
+    }
+}
 $currentCategoryName = '';
 foreach ($categories as $cat) {
     if ($cat['id'] == $incident['category_id']) {
@@ -80,13 +90,14 @@ require __DIR__ . '/../src/views/header.php';
   <div class="panel-header"><h2><?= icon('edit', 'icon icon-sm') ?> แก้ไขรายการ</h2></div>
   <form method="post" class="grid-form">
     <label>พนักงาน
-      <select name="employee_choice" id="employeeSelect" required>
-        <option value="">-- เลือกพนักงาน --</option>
-        <?php foreach ($employees as $emp): ?>
-          <option value="emp:<?= $emp['id'] ?>" <?= $currentChoice === 'emp:' . $emp['id'] ? 'selected' : '' ?>><?= e($emp['full_name']) ?> (<?= e($emp['department']) ?>)</option>
-        <?php endforeach; ?>
-        <option value="other" <?= $currentChoice === 'other' ? 'selected' : '' ?>>+ พนักงานจากแผนกอื่น (ระบุชื่อเอง)</option>
-      </select>
+      <div class="combobox" id="employeeCombobox">
+        <input type="hidden" name="employee_choice" class="combobox-value" value="<?= e($currentChoice) ?>">
+        <div class="input-icon">
+          <?= icon('user', 'icon icon-sm') ?>
+          <input type="text" class="combobox-search" autocomplete="off" value="<?= e($currentEmployeeLabel) ?>" placeholder="พิมพ์ค้นหาชื่อพนักงาน">
+        </div>
+        <div class="combobox-menu"></div>
+      </div>
     </label>
     <label>วันที่
       <input type="date" name="incident_date" value="<?= e($incident['incident_date']) ?>" required>
@@ -136,8 +147,9 @@ require __DIR__ . '/../src/views/header.php';
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var ITEMS = <?= json_encode($itemsForJs, JSON_UNESCAPED_UNICODE) ?>;
+  var EMPLOYEES = <?= json_encode($employees, JSON_UNESCAPED_UNICODE) ?>;
   initItemCombobox(document.getElementById('itemCombobox'), ITEMS);
-  initEmployeeToggle('employeeSelect', 'externalEmployeeBox');
+  initEmployeeCombobox(document.getElementById('employeeCombobox'), EMPLOYEES, 'externalEmployeeBox');
 });
 </script>
 <?php require __DIR__ . '/../src/views/footer.php'; ?>

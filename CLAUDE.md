@@ -27,6 +27,18 @@ first admin account; after that it redirects to `login.php`. This gate is just `
 There is no linter, formatter, or test runner configured — verify changes by running the app and clicking
 through the flow, or with `php -l <file>` for a syntax check.
 
+## Production
+
+`docker-compose.prod.yml` + `caddy/Caddyfile` deploy the same code to a server (an Oracle
+Cloud Always Free VM) with Caddy terminating HTTPS. Credentials come from `.env` (gitignored;
+copy `.env.example`), MySQL and PHP publish no host ports, and phpMyAdmin is bound to
+loopback so it needs an SSH tunnel. Full walkthrough and day-to-day commands: `DEPLOY.md`.
+
+Internet-facing hardening lives in `src/session.php` (HttpOnly/SameSite/Secure cookies),
+`public/login.php` (per-IP lockout after 8 failed attempts for 15 minutes, session id
+regenerated on login), and `client_ip()` in `src/helpers.php` (reads Caddy's `X-Real-IP`,
+trustworthy only because the PHP container publishes no ports).
+
 ## Database
 
 `db/init.sql` is the full current schema (mounted read-only into

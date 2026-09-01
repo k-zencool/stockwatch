@@ -21,6 +21,32 @@ function flash(string $key, ?string $message = null)
     return $msg;
 }
 
+/**
+ * The visitor's IP address, used to rate-limit logins.
+ * Behind the reverse proxy REMOTE_ADDR is always Caddy, so the forwarded header is
+ * preferred. That header is only trustworthy because the PHP container publishes no
+ * ports in production — nothing but Caddy can reach it to forge one.
+ */
+function client_ip(): string
+{
+    $forwarded = $_SERVER['HTTP_X_REAL_IP'] ?? '';
+    if ($forwarded !== '' && filter_var($forwarded, FILTER_VALIDATE_IP)) {
+        return $forwarded;
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+}
+
+/**
+ * Asset URL stamped with the file's mtime, so a changed CSS/JS file is fetched
+ * fresh instead of being served from the browser cache.
+ */
+function asset(string $path): string
+{
+    $file = __DIR__ . '/../public/' . ltrim($path, '/');
+    $version = is_file($file) ? filemtime($file) : time();
+    return e($path) . '?v=' . $version;
+}
+
 function thai_date(string $date): string
 {
     $months = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];

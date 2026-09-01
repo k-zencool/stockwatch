@@ -1,3 +1,6 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Real credentials — only .env.example belongs in the repo.
+.env
