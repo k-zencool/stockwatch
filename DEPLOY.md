@@ -179,3 +179,43 @@ docker exec -i stockwatch_db mysql -uroot -p"$DB_ROOT_PASSWORD" stock_tracker < 
   second admin later.
 - There is no automated off-server backup. The `mysqldump` above is manual — copy the dump
   somewhere else if the data starts to matter.
+
+---
+
+## Variant: shared VPS without its own domain (the shicenter.net server)
+
+Since 11 Nov 2026 StockWatch also runs on the VPS that hosts shicenter.net
+(`root@162.141.142.135`, key `~/.ssh/shicenter_deploy`, aaPanel + Docker). That machine's
+own nginx already owns ports 80/443, so the Caddy stack above is not used there. Instead
+`docker-compose.server.yml` runs just MySQL + PHP + phpMyAdmin with its own port block,
+kept apart from the other projects on the box (shicenter uses 9810-9813, novicecraft 8091+).
+
+| What | Where |
+|---|---|
+| Code | `/opt/stockwatch` (plain copy of the working tree, no git checkout) |
+| Compose project | `stockwatch` (`docker compose -f docker-compose.server.yml ...`) |
+| App | <https://stockkate.duckdns.org> (DuckDNS name → aaPanel nginx → `127.0.0.1:9820`; HTTP redirects to HTTPS) |
+| nginx vhost | `/www/server/panel/vhost/nginx/stockkate.duckdns.org.conf` (copy kept in `deploy/nginx-stockkate.duckdns.org.conf`); reload with `/www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload` |
+| Certificate | certbot webroot (`/var/www/stockkate.duckdns.org`), auto-renews, issued 11 Nov 2026 |
+| phpMyAdmin | `127.0.0.1:9821` on the server — `ssh -L 9821:127.0.0.1:9821 root@162.141.142.135` then `http://localhost:9821` |
+| Secrets | `/opt/stockwatch/.env` (`APP_PORT`, `PMA_PORT`, `DB_*`), chmod 600, not in git |
+
+Update the code (from this folder on your PC):
+
+```bash
+tar --exclude=./.git --exclude=./backup --exclude=./.env -cf - . \
+  | ssh -i ~/.ssh/shicenter_deploy root@162.141.142.135 "tar -x -C /opt/stockwatch"
+# only if php/Dockerfile changed:
+ssh -i ~/.ssh/shicenter_deploy root@162.141.142.135 \
+  "cd /opt/stockwatch && docker compose -f docker-compose.server.yml up -d --build"
+```
+
+The web container is bound to `127.0.0.1:9820`, so the app is only reachable through nginx
+(Docker-published ports bypass ufw on this box, so the binding, not a firewall rule, is what
+closes it). The vhost sends `X-Forwarded-Proto` and `X-Real-IP`, which the Secure cookie flag
+and the login rate limiter rely on. If the DuckDNS name ever changes: update the IP at
+<https://www.duckdns.org/domains>, run
+`certbot certonly --webroot -w /var/www/<name> -d <name>`, and rename the vhost accordingly.
+
+Do not touch `/opt/shicenter.net`, `/opt/novicecraft` or the other `/opt/*` folders — they
+belong to other projects sharing the machine.

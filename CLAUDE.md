@@ -29,7 +29,9 @@ through the flow, or with `php -l <file>` for a syntax check.
 
 ## Production
 
-`docker-compose.prod.yml` + `caddy/Caddyfile` deploy the same code to a server (an Oracle
+Live site: <https://stockkate.duckdns.org>, running from `docker-compose.server.yml` on the shared
+shicenter.net VPS at `/opt/stockwatch` (web bound to 127.0.0.1:9820, aaPanel's nginx + certbot in
+front instead of Caddy; see the last section of `DEPLOY.md`). `docker-compose.prod.yml` + `caddy/Caddyfile` deploy the same code to a server (an Oracle
 Cloud Always Free VM) with Caddy terminating HTTPS. Credentials come from `.env` (gitignored;
 copy `.env.example`), MySQL and PHP publish no host ports, and phpMyAdmin is bound to
 loopback so it needs an SSH tunnel. Full walkthrough and day-to-day commands: `DEPLOY.md`.
