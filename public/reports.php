@@ -99,7 +99,7 @@ require __DIR__ . '/../src/views/header.php';
 
 <div class="panel">
   <div class="panel-header"><h2><?= icon('chart', 'icon icon-sm') ?> แนวโน้มรายวัน</h2></div>
-  <canvas id="trendChart" height="90"></canvas>
+  <div style="position:relative;height:clamp(220px, 30vw, 340px)"><canvas id="trendChart"></canvas></div>
 </div>
 
 <div class="panel">
@@ -127,11 +127,11 @@ require __DIR__ . '/../src/views/header.php';
 <div class="two-col">
   <div class="panel">
     <div class="panel-header"><h2><?= icon('box', 'icon icon-sm') ?> สรุปตามประเภทของ</h2></div>
-    <canvas id="categoryChart" height="220"></canvas>
+    <div style="position:relative;height:280px"><canvas id="categoryChart"></canvas></div>
   </div>
   <div class="panel">
     <div class="panel-header"><h2><?= icon('help-circle', 'icon icon-sm') ?> สรุปตามสาเหตุที่ไม่เบิก</h2></div>
-    <canvas id="reasonChart" height="220"></canvas>
+    <div style="position:relative;height:280px"><canvas id="reasonChart"></canvas></div>
   </div>
 </div>
 
@@ -148,16 +148,16 @@ document.addEventListener('DOMContentLoaded', function () {
   const gridColor = cssVar('--border') || '#e6e7f2';
 
   Chart.defaults.color = mutedColor;
-  Chart.defaults.font.family = "'Prompt', sans-serif";
+  Chart.defaults.font.family = "'Anuphan', 'Prompt', sans-serif";
 
   new Chart(document.getElementById('trendChart'), {
     type: 'bar',
     data: {
       labels: trendData.map(r => r.d),
-      datasets: [{ label: 'จำนวนรายการ', data: trendData.map(r => r.cnt), backgroundColor: '#6366f1', borderRadius: 6 }]
+      datasets: [{ label: 'จำนวนรายการ', data: trendData.map(r => r.cnt), backgroundColor: cssVar('--brand') || '#0f9b8e', borderRadius: 6, maxBarThickness: 44 }]
     },
     options: {
-      responsive: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         y: { beginAtZero: true, ticks: { precision: 0, color: mutedColor }, grid: { color: gridColor } },
@@ -170,20 +170,20 @@ document.addEventListener('DOMContentLoaded', function () {
     type: 'doughnut',
     data: {
       labels: catData.map(r => r.name),
-      datasets: [{ data: catData.map(r => r.cnt), backgroundColor: ['#4f46e5', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#94a3b8'] }]
+      datasets: [{ data: catData.map(r => r.cnt), backgroundColor: ['#0f9b8e', '#0e7490', '#f59e0b', '#e11d48', '#8b5cf6', '#94a3b8'], borderWidth: 0 }]
     },
-    options: { responsive: true, plugins: { legend: { labels: { color: textColor } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { color: textColor, usePointStyle: true, boxWidth: 8 } } } }
   });
 
   new Chart(document.getElementById('reasonChart'), {
     type: 'bar',
     data: {
       labels: reasonData.map(r => r.name),
-      datasets: [{ label: 'จำนวนครั้ง', data: reasonData.map(r => r.cnt), backgroundColor: '#ec4899', borderRadius: 6 }]
+      datasets: [{ label: 'จำนวนครั้ง', data: reasonData.map(r => r.cnt), backgroundColor: cssVar('--accent') || '#f59e0b', borderRadius: 6, maxBarThickness: 44 }]
     },
     options: {
       indexAxis: 'y',
-      responsive: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         x: { beginAtZero: true, ticks: { precision: 0, color: mutedColor }, grid: { color: gridColor } },

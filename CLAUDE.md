@@ -90,3 +90,22 @@ page's `<head>` (before CSS loads, to avoid a flash of the wrong theme).
 
 All UI text and seed data is Thai. When adding user-facing strings, match the existing Thai copy rather
 than introducing English.
+
+## Frontend notes (redesign, Nov 2026)
+
+- Font is **Anuphan** (Google Fonts), loaded in `header.php`, `login.php`, `setup.php`, `report_print.php`.
+  Colour/spacing tokens live at the top of `style.css`; the dark palette is declared twice on purpose
+  (system preference + explicit `data-theme="dark"`). Use tokens, never raw hex, in page markup.
+- **Responsive**: ≥1800px widens the content column; 901–1180px auto-collapses the sidebar to an icon
+  rail (user can pin it open/closed via the `«` button, stored in `localStorage('kp_sidebar')`); ≤900px
+  hides the sidebar and shows the bottom nav; ≤640px turns every `.table-wrap > .data-table` into
+  stacked cards — `app.js` copies the `<th>` text into `data-label` on each cell, so new tables get this
+  for free as long as they use that markup.
+- **PWA**: `public/manifest.webmanifest`, `public/sw.js`, `public/offline.html`, icons in
+  `public/assets/icons/` (PNG 192/512/maskable + SVG). `app.js` registers the worker (HTTPS or
+  localhost only), shows the "ติดตั้งเป็นแอป" sidebar button when the browser fires
+  `beforeinstallprompt`, and shows an offline banner. The worker never caches PHP pages (network
+  only, offline fallback page); static assets are cache-first and refreshed in the background. If you
+  change `sw.js` itself or want to force-drop old asset caches, bump `VERSION` in it.
+- Chart.js colours on `reports.php` are read from the CSS tokens (`--brand`, `--accent`), so they follow
+  the theme; the canvases sit in fixed-height wrappers with `maintainAspectRatio: false`.

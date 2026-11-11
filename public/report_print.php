@@ -40,6 +40,9 @@ $generatedAt = date('d/m/Y H:i');
 <head>
 <meta charset="UTF-8">
 <title>รายงานสรุป <?= e($dateFrom) ?> ถึง <?= e($dateTo) ?></title>
+<meta name="theme-color" content="#102532">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <link rel="icon" type="image/svg+xml" href="<?= asset('assets/favicon.svg') ?>">
 <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>">
 </head>

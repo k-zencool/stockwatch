@@ -443,3 +443,87 @@ function initEmployeeCombobox(root, employees, externalBoxId) {
   trackComboboxMenu(searchInput, menu);
   showExternal(hiddenChoice.value === 'other');
 }
+
+/**
+ * Responsive tables: copy each column header into data-label on its cells so the
+ * phone layout (style.css, <=640px) can render rows as labelled cards.
+ */
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.table-wrap > .data-table').forEach(function (table) {
+    var heads = Array.prototype.map.call(table.querySelectorAll('thead th'), function (th) {
+      return th.textContent.trim();
+    });
+    if (!heads.length) return;
+    table.querySelectorAll('tbody tr').forEach(function (tr) {
+      Array.prototype.forEach.call(tr.children, function (td, i) {
+        if (td.classList.contains('empty-row')) return;
+        td.setAttribute('data-label', heads[i] || '');
+      });
+    });
+    table.parentElement.classList.add('is-cards');
+  });
+});
+
+/**
+ * Sidebar: user-controlled collapse to an icon rail, remembered in localStorage.
+ * Between 901-1180px the CSS collapses it automatically unless the user expanded it.
+ */
+document.addEventListener('DOMContentLoaded', function () {
+  var sidebar = document.getElementById('sidebar');
+  var toggle = document.getElementById('sidebarToggle');
+  if (!sidebar || !toggle) return;
+
+  var saved = null;
+  try { saved = localStorage.getItem('kp_sidebar'); } catch (e) {}
+  if (saved === 'rail') sidebar.classList.add('is-rail');
+  if (saved === 'full') sidebar.classList.add('is-expanded');
+
+  toggle.addEventListener('click', function () {
+    var autoRail = window.matchMedia('(max-width: 1180px)').matches;
+    var isRail = sidebar.classList.contains('is-rail') || (autoRail && !sidebar.classList.contains('is-expanded'));
+    sidebar.classList.toggle('is-rail', !isRail);
+    sidebar.classList.toggle('is-expanded', isRail);
+    try { localStorage.setItem('kp_sidebar', isRail ? 'full' : 'rail'); } catch (e) {}
+  });
+});
+
+/**
+ * PWA: register the service worker, offer the install button when the browser
+ * allows it, and show a banner while offline.
+ */
+(function () {
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    });
+  }
+
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById('installApp');
+    if (btn) btn.classList.add('show');
+  });
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('installApp');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function () { deferredPrompt = null; btn.classList.remove('show'); });
+    });
+  });
+  window.addEventListener('appinstalled', function () {
+    var btn = document.getElementById('installApp');
+    if (btn) btn.classList.remove('show');
+  });
+
+  function updateOnline() {
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.classList.toggle('show', !navigator.onLine);
+  }
+  window.addEventListener('online', updateOnline);
+  window.addEventListener('offline', updateOnline);
+  document.addEventListener('DOMContentLoaded', updateOnline);
+})();
