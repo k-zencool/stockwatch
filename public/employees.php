@@ -4,7 +4,7 @@ require_login();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add') {
     $fullName = trim($_POST['full_name'] ?? '');
-    $employeeCode = trim($_POST['employee_code'] ?? '');
+    $employeeCode = normalize_employee_code($_POST['employee_code'] ?? '');
     $department = trim($_POST['department'] ?? '');
     $position = trim($_POST['position'] ?? '');
 

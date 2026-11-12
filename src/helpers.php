@@ -109,3 +109,10 @@ function employee_code_owner(PDO $pdo, string $code, int $exceptId = 0): ?array
     $stmt->execute([$code, $exceptId]);
     return $stmt->fetch() ?: null;
 }
+
+/** Trim an employee code; placeholders like "-", "--" or "—" mean "no code" and become ''. */
+function normalize_employee_code(string $code): string
+{
+    $code = trim($code);
+    return preg_match('/^[\s\-–—_.]*$/u', $code) ? '' : $code;
+}
