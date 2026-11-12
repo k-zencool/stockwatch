@@ -11,13 +11,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
     if ($fullName === '') {
         flash('error', 'กรุณากรอกชื่อพนักงาน');
         redirect('employees.php?open=add');
-    } else {
-        $stmt = $pdo->prepare(
-            "INSERT INTO employees (employee_code, full_name, department, position) VALUES (?, ?, ?, ?)"
-        );
-        $stmt->execute([$employeeCode ?: null, $fullName, $department ?: null, $position ?: null]);
-        flash('success', 'เพิ่มพนักงานเรียบร้อยแล้ว');
     }
+    if (mb_strlen($employeeCode) > 20) {
+        flash('error', 'รหัสพนักงานยาวได้ไม่เกิน 20 ตัวอักษร');
+        redirect('employees.php?open=add');
+    }
+    if ($employeeCode !== '' && ($owner = employee_code_owner($pdo, $employeeCode))) {
+        flash('error', 'รหัสพนักงาน "' . $employeeCode . '" ซ้ำกับ ' . $owner['full_name'] . ' — กรุณาใช้รหัสอื่น หรือเว้นว่างไว้');
+        redirect('employees.php?open=add');
+    }
+
+    $stmt = $pdo->prepare(
+        "INSERT INTO employees (employee_code, full_name, department, position) VALUES (?, ?, ?, ?)"
+    );
+    try {
+        $stmt->execute([$employeeCode ?: null, $fullName, $department ?: null, $position ?: null]);
+    } catch (PDOException $ex) {
+        flash('error', 'เพิ่มพนักงานไม่สำเร็จ: ข้อมูลซ้ำหรือไม่ถูกต้อง');
+        redirect('employees.php?open=add');
+    }
+    flash('success', 'เพิ่มพนักงานเรียบร้อยแล้ว');
     redirect('employees.php');
 }
 
@@ -188,7 +201,7 @@ require __DIR__ . '/../src/views/header.php';
     <form method="post" class="grid-form">
       <input type="hidden" name="action" value="add">
       <label>รหัสพนักงาน
-        <input type="text" name="employee_code" placeholder="เช่น EMP021">
+        <input type="text" name="employee_code" maxlength="20" placeholder="เช่น EMP021">
       </label>
       <label>ชื่อ-นามสกุล
         <input type="text" name="full_name" required>
@@ -215,7 +228,7 @@ require __DIR__ . '/../src/views/header.php';
     <form method="post" action="employee_edit.php" class="grid-form">
       <input type="hidden" name="id" value="">
       <label>รหัสพนักงาน
-        <input type="text" name="employee_code">
+        <input type="text" name="employee_code" maxlength="20">
       </label>
       <label>ชื่อ-นามสกุล
         <input type="text" name="full_name" required>

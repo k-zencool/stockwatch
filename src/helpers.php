@@ -101,3 +101,11 @@ function icon(string $name, string $class = 'icon'): string
     $body = $icons[$name] ?? '';
     return '<svg class="' . e($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $body . '</svg>';
 }
+
+/** The employee already using this code (employees.employee_code is UNIQUE), or null. */
+function employee_code_owner(PDO $pdo, string $code, int $exceptId = 0): ?array
+{
+    $stmt = $pdo->prepare('SELECT id, full_name FROM employees WHERE employee_code = ? AND id <> ? LIMIT 1');
+    $stmt->execute([$code, $exceptId]);
+    return $stmt->fetch() ?: null;
+}

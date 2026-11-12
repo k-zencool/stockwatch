@@ -60,11 +60,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('error', 'กรุณากรอกชื่อพนักงาน');
         redirect('employees.php?open=edit&id=' . $id);
     }
+    if (mb_strlen($employeeCode) > 20) {
+        flash('error', 'รหัสพนักงานยาวได้ไม่เกิน 20 ตัวอักษร');
+        redirect('employees.php?open=edit&id=' . $id);
+    }
+    if ($employeeCode !== '' && ($owner = employee_code_owner($pdo, $employeeCode, $id))) {
+        flash('error', 'รหัสพนักงาน "' . $employeeCode . '" ซ้ำกับ ' . $owner['full_name'] . ' — กรุณาใช้รหัสอื่น หรือเว้นว่างไว้');
+        redirect('employees.php?open=edit&id=' . $id);
+    }
 
     $stmt = $pdo->prepare(
         "UPDATE employees SET employee_code=?, full_name=?, department=?, position=? WHERE id=?"
     );
-    $stmt->execute([$employeeCode ?: null, $fullName, $department ?: null, $position ?: null, $id]);
+    try {
+        $stmt->execute([$employeeCode ?: null, $fullName, $department ?: null, $position ?: null, $id]);
+    } catch (PDOException $ex) {
+        flash('error', 'บันทึกไม่สำเร็จ: ข้อมูลซ้ำหรือไม่ถูกต้อง');
+        redirect('employees.php?open=edit&id=' . $id);
+    }
     flash('success', 'บันทึกข้อมูลพนักงานเรียบร้อยแล้ว');
     redirect('employees.php');
 }
