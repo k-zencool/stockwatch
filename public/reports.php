@@ -36,7 +36,7 @@ $stmt->execute([$dateFrom, $dateTo]);
 $byCategory = $stmt->fetchAll();
 
 $stmt = $pdo->prepare(
-    "SELECT COALESCE(r.name, 'ไม่ระบุสาเหตุ') AS name, COUNT(*) AS cnt
+    "SELECT COALESCE(r.name, 'ไม่ระบุกะ') AS name, COUNT(*) AS cnt
      FROM incidents i LEFT JOIN reasons r ON r.id = i.reason_id
      WHERE i.incident_date BETWEEN ? AND ?
      GROUP BY r.id ORDER BY cnt DESC"
@@ -90,7 +90,7 @@ require __DIR__ . '/../src/views/header.php';
   </div>
   <div class="stat-card">
     <div class="stat-card-top">
-      <div class="stat-label">สาเหตุที่พบบ่อยสุด</div>
+      <div class="stat-label">กะที่พบบ่อยสุด</div>
       <span class="stat-icon stat-icon-blue"><?= icon('help-circle') ?></span>
     </div>
     <div class="stat-value stat-value-sm"><?= $byReason ? e($byReason[0]['name']) . ' (' . $byReason[0]['cnt'] . ')' : '-' ?></div>
@@ -130,7 +130,7 @@ require __DIR__ . '/../src/views/header.php';
     <div style="position:relative;height:280px"><canvas id="categoryChart"></canvas></div>
   </div>
   <div class="panel">
-    <div class="panel-header"><h2><?= icon('help-circle', 'icon icon-sm') ?> สรุปตามสาเหตุที่ไม่เบิก</h2></div>
+    <div class="panel-header"><h2><?= icon('help-circle', 'icon icon-sm') ?> สรุปตามกะพนักงาน</h2></div>
     <div style="position:relative;height:280px"><canvas id="reasonChart"></canvas></div>
   </div>
 </div>

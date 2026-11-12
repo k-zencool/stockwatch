@@ -23,7 +23,7 @@ $stmt = $pdo->prepare(
      COALESCE(e.full_name, i.external_name) AS display_name,
      COALESCE(e.department, i.external_department) AS display_department,
      (e.id IS NULL) AS is_external,
-     i.item_name, c.name AS category_name, r.name AS reason_name, i.note
+     i.item_name, c.name AS category_name, r.name AS reason_name, i.reason_text, i.note
      FROM incidents i LEFT JOIN employees e ON e.id = i.employee_id
      LEFT JOIN item_categories c ON c.id = i.category_id
      LEFT JOIN reasons r ON r.id = i.reason_id
@@ -74,7 +74,7 @@ $generatedAt = date('d/m/Y H:i');
 
   <h2>รายละเอียดทั้งหมด</h2>
   <table class="print-table">
-    <thead><tr><th>วันที่</th><th>ชื่อ</th><th>ประเภท</th><th>แผนก</th><th>รายการ</th><th>หมวดหมู่</th><th>สาเหตุ</th><th>หมายเหตุ</th></tr></thead>
+    <thead><tr><th>วันที่</th><th>ชื่อ</th><th>ประเภท</th><th>แผนก</th><th>รายการ</th><th>หมวดหมู่</th><th>กะพนักงาน</th><th>สาเหตุ</th><th>หมายเหตุ</th></tr></thead>
     <tbody>
       <?php foreach ($detail as $row): ?>
         <tr>
@@ -85,6 +85,7 @@ $generatedAt = date('d/m/Y H:i');
           <td><?= e($row['item_name']) ?></td>
           <td><?= e($row['category_name'] ?? '-') ?></td>
           <td><?= e($row['reason_name'] ?? '-') ?></td>
+          <td><?= e($row['reason_text'] ?? '-') ?></td>
           <td><?= e($row['note'] ?? '') ?></td>
         </tr>
       <?php endforeach; ?>

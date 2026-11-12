@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $itemId = ($_POST['item_id'] ?? '') !== '' ? (int) $_POST['item_id'] : null;
     $reasonId = ($_POST['reason_id'] ?? '') !== '' ? (int) $_POST['reason_id'] : null;
+    $reasonText = trim($_POST['reason_text'] ?? '');
     $itemName = trim($_POST['item_name'] ?? '');
     $incidentDate = $_POST['incident_date'] ?? '';
     $note = trim($_POST['note'] ?? '');
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hasEmployee = ($employeeId !== null && $employeeId > 0) || ($externalName !== null && $externalName !== '');
 
     if (!$hasEmployee || $itemName === '' || $incidentDate === '' || !$reasonId) {
-        flash('error', 'กรุณาเลือก/กรอกพนักงาน, รายการของ, สาเหตุ และวันที่ให้ครบถ้วน');
+        flash('error', 'กรุณาเลือก/กรอกพนักงาน, กะ, รายการของ และวันที่ให้ครบถ้วน');
     } else {
         $categoryId = null;
         if ($itemId) {
@@ -43,11 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $categoryId = $itemCategory ? (int) $itemCategory : null;
         }
         $stmt = $pdo->prepare(
-            "UPDATE incidents SET employee_id=?, external_name=?, external_department=?, item_id=?, category_id=?, reason_id=?, item_name=?, incident_date=?, note=? WHERE id=?"
+            "UPDATE incidents SET employee_id=?, external_name=?, external_department=?, item_id=?, category_id=?, reason_id=?, reason_text=?, item_name=?, incident_date=?, note=? WHERE id=?"
         );
         $stmt->execute([
             $employeeId, $externalName ?: null, $externalDepartment ?: null,
-            $itemId, $categoryId, $reasonId, $itemName, $incidentDate, $note ?: null, $id,
+            $itemId, $categoryId, $reasonId, $reasonText !== '' ? mb_substr($reasonText, 0, 255) : null, $itemName, $incidentDate, $note ?: null, $id,
         ]);
         flash('success', 'แก้ไขรายการเรียบร้อยแล้ว');
         redirect('incidents.php');
@@ -127,13 +128,16 @@ require __DIR__ . '/../src/views/header.php';
       </div>
       <p class="field-hint">หมวดหมู่จะยึดตามข้อมูลของชิ้นนั้นในคลังโดยอัตโนมัติ — ถ้าพิมพ์ชื่อใหม่ที่ยังไม่มีในคลัง จะไม่ถูกระบุหมวดหมู่</p>
     </label>
-    <label class="grid-span-2">สาเหตุที่ไม่เบิก
+    <label class="grid-span-2">กะพนักงาน
       <select name="reason_id" required>
-        <option value="">-- เลือกสาเหตุ --</option>
+        <option value="">-- เลือกกะ --</option>
         <?php foreach ($reasons as $reason): ?>
           <option value="<?= $reason['id'] ?>" <?= $incident['reason_id'] == $reason['id'] ? 'selected' : '' ?>><?= e($reason['name']) ?></option>
         <?php endforeach; ?>
       </select>
+    </label>
+    <label class="grid-span-2">สาเหตุที่ไม่เบิก
+      <input type="text" name="reason_text" maxlength="255" value="<?= e($incident['reason_text'] ?? '') ?>" placeholder="พิมพ์สาเหตุ เช่น ลืมเบิก, รีบใช้งาน">
     </label>
     <label class="grid-span-2">หมายเหตุ
       <input type="text" name="note" value="<?= e($incident['note'] ?? '') ?>">

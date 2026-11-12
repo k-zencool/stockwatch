@@ -28,15 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
     $categoryId = ($_POST['category_id'] ?? '') !== '' ? (int) $_POST['category_id'] : null;
     $code = trim($_POST['code'] ?? '');
     $unit = trim($_POST['unit'] ?? '');
+    $shelf = trim($_POST['shelf'] ?? '');
 
     if ($name === '') {
         flash('error', 'กรุณากรอกชื่อของ/อะไหล่');
         redirect('items.php?open=add');
     } else {
         $stmt = $pdo->prepare(
-            "INSERT INTO items (name, category_id, code, unit) VALUES (?, ?, ?, ?)"
+            "INSERT INTO items (name, category_id, code, shelf, unit) VALUES (?, ?, ?, ?, ?)"
         );
-        $stmt->execute([$name, $categoryId, $code ?: null, $unit ?: null]);
+        $stmt->execute([$name, $categoryId, $code ?: null, $shelf ?: null, $unit ?: null]);
         flash('success', 'เพิ่มรายการในคลังเรียบร้อยแล้ว');
     }
     redirect('items.php');
@@ -84,8 +85,8 @@ $params = [];
 if ($filterCategory !== '') { $conditions[] = 'i.category_id = ?'; $params[] = (int) $filterCategory; }
 if ($filterStatus !== '') { $conditions[] = 'i.is_active = ?'; $params[] = $filterStatus === 'inactive' ? 0 : 1; }
 if ($filterKeyword !== '') {
-    $conditions[] = '(i.name LIKE ? OR i.code LIKE ?)';
-    $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%";
+    $conditions[] = '(i.name LIKE ? OR i.code LIKE ? OR i.shelf LIKE ?)';
+    $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%";
 }
 $where = $conditions ? ('WHERE ' . implode(' AND ', $conditions)) : '';
 
@@ -122,7 +123,7 @@ require __DIR__ . '/../src/views/header.php';
   <form method="get" class="filter-bar" data-autosubmit>
     <div class="input-icon filter-search">
       <?= icon('search', 'icon icon-sm') ?>
-      <input type="text" name="q" value="<?= e($filterKeyword) ?>" placeholder="ค้นหาชื่อของ หรือรหัส/SKU แล้วกด Enter">
+      <input type="text" name="q" value="<?= e($filterKeyword) ?>" placeholder="ค้นหาชื่อของ รหัส/SKU หรือ Shelf แล้วกด Enter">
     </div>
     <button type="button" class="btn btn-ghost" data-menu="advancedFilters" aria-expanded="false">
       <?= icon('filter', 'icon icon-sm') ?> ตัวกรอง
@@ -166,17 +167,18 @@ require __DIR__ . '/../src/views/header.php';
   <div class="table-wrap">
     <table class="data-table">
       <thead>
-        <tr><th>รหัส</th><th>ชื่อ</th><th>หมวดหมู่</th><th>หน่วยนับ</th><th>ถูกบันทึกไม่เบิกกี่ครั้ง</th><th>สถานะ</th><th></th></tr>
+        <tr><th>รหัส</th><th>ชื่อ</th><th>หมวดหมู่</th><th>Shelf</th><th>หน่วยนับ</th><th>ถูกบันทึกไม่เบิกกี่ครั้ง</th><th>สถานะ</th><th></th></tr>
       </thead>
       <tbody>
         <?php if (!$items): ?>
-          <tr><td colspan="7" class="empty-row"><?= icon('archive', 'icon icon-lg') ?><span>ไม่พบรายการในคลัง</span></td></tr>
+          <tr><td colspan="8" class="empty-row"><?= icon('archive', 'icon icon-lg') ?><span>ไม่พบรายการในคลัง</span></td></tr>
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
           <tr class="<?= $item['is_active'] ? '' : 'row-inactive' ?>">
             <td><?= e($item['code'] ?? '-') ?></td>
             <td><?= e($item['name']) ?></td>
             <td><?= e($item['category_name'] ?? '-') ?></td>
+            <td><?= e($item['shelf'] ?? '-') ?></td>
             <td><?= e($item['unit'] ?? '-') ?></td>
             <td><span class="badge <?= $item['incident_count'] >= 3 ? 'badge-danger' : 'badge-neutral' ?>"><?= $item['incident_count'] >= 3 ? icon('alert-triangle', 'icon icon-xs') : '' ?><?= $item['incident_count'] ?></span></td>
             <td><?= $item['is_active'] ? '<span class="badge badge-success">ใช้งานอยู่</span>' : '<span class="badge badge-neutral">ปิดใช้งาน</span>' ?></td>
@@ -188,6 +190,7 @@ require __DIR__ . '/../src/views/header.php';
                 data-field-name="<?= e($item['name']) ?>"
                 data-field-category_id="<?= e((string) ($item['category_id'] ?? '')) ?>"
                 data-field-code="<?= e($item['code'] ?? '') ?>"
+                data-field-shelf="<?= e($item['shelf'] ?? '') ?>"
                 data-field-unit="<?= e($item['unit'] ?? '') ?>"><?= icon('edit', 'icon icon-sm') ?></button>
             </td>
           </tr>
@@ -266,7 +269,10 @@ require __DIR__ . '/../src/views/header.php';
       <label>รหัส/SKU
         <input type="text" name="code" placeholder="เช่น STA-001">
       </label>
-      <label class="grid-span-2">หน่วยนับ
+      <label>Shelf (ตำแหน่งจัดเก็บ)
+        <input type="text" name="shelf" placeholder="เช่น A3-3">
+      </label>
+      <label>หน่วยนับ
         <input type="text" name="unit" placeholder="เช่น ชิ้น, ด้าม, ม้วน">
       </label>
       <div class="grid-span-2">
@@ -298,7 +304,10 @@ require __DIR__ . '/../src/views/header.php';
       <label>รหัส/SKU
         <input type="text" name="code">
       </label>
-      <label class="grid-span-2">หน่วยนับ
+      <label>Shelf (ตำแหน่งจัดเก็บ)
+        <input type="text" name="shelf">
+      </label>
+      <label>หน่วยนับ
         <input type="text" name="unit">
       </label>
       <div class="grid-span-2">

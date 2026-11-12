@@ -10,7 +10,7 @@ $stmt = $pdo->prepare(
      COALESCE(e.full_name, i.external_name) AS display_name,
      COALESCE(e.department, i.external_department) AS display_department,
      (e.id IS NULL) AS is_external,
-     i.item_name, c.name AS category_name, r.name AS reason_name, i.note
+     i.item_name, c.name AS category_name, r.name AS reason_name, i.reason_text, i.note
      FROM incidents i
      LEFT JOIN employees e ON e.id = i.employee_id
      LEFT JOIN item_categories c ON c.id = i.category_id
@@ -27,7 +27,7 @@ header('Content-Disposition: attachment; filename="report_' . $dateFrom . '_to_'
 echo "\xEF\xBB\xBF";
 
 $out = fopen('php://output', 'w');
-fputcsv($out, ['วันที่', 'ชื่อพนักงาน', 'ประเภทพนักงาน', 'แผนก', 'รายการที่ไม่เบิก', 'หมวดหมู่', 'สาเหตุ', 'หมายเหตุ']);
+fputcsv($out, ['วันที่', 'ชื่อพนักงาน', 'ประเภทพนักงาน', 'แผนก', 'รายการที่ไม่เบิก', 'หมวดหมู่', 'กะพนักงาน', 'สาเหตุ', 'หมายเหตุ']);
 foreach ($rows as $row) {
     fputcsv($out, [
         $row['incident_date'],
@@ -37,6 +37,7 @@ foreach ($rows as $row) {
         $row['item_name'],
         $row['category_name'] ?? '-',
         $row['reason_name'] ?? '-',
+        $row['reason_text'] ?? '-',
         $row['note'] ?? '',
     ]);
 }

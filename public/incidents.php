@@ -7,16 +7,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_r
     $reasonOk = false;
 
     if ($reasonName === '') {
-        flash('error', 'กรุณากรอกชื่อสาเหตุ');
+        flash('error', 'กรุณากรอกชื่อกะ');
     } else {
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM reasons WHERE LOWER(name) = LOWER(?)');
         $stmt->execute([$reasonName]);
         if ((int) $stmt->fetchColumn() > 0) {
-            flash('error', 'มีสาเหตุนี้อยู่แล้ว');
+            flash('error', 'มีกะนี้อยู่แล้ว');
         } else {
             $stmt = $pdo->prepare('INSERT INTO reasons (name) VALUES (?)');
             $stmt->execute([$reasonName]);
-            flash('success', 'เพิ่มสาเหตุเรียบร้อยแล้ว');
+            flash('success', 'เพิ่มกะเรียบร้อยแล้ว');
             $reasonOk = true;
         }
     }
@@ -38,14 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
 
     $itemId = ($_POST['item_id'] ?? '') !== '' ? (int) $_POST['item_id'] : null;
     $reasonId = ($_POST['reason_id'] ?? '') !== '' ? (int) $_POST['reason_id'] : null;
+    $reasonText = trim($_POST['reason_text'] ?? '');
     $itemName = trim($_POST['item_name'] ?? '');
     $incidentDate = $_POST['incident_date'] ?? '';
     $note = trim($_POST['note'] ?? '');
 
     $hasEmployee = ($employeeId !== null && $employeeId > 0) || ($externalName !== null && $externalName !== '');
 
-    if (!$hasEmployee || $itemName === '' || $incidentDate === '' || !$reasonId) {
-        flash('error', 'กรุณาเลือก/กรอกพนักงาน, รายการของ, สาเหตุ และวันที่ให้ครบถ้วน');
+    if (!$hasEmployee || $itemName === '' || $incidentDate === '' || !$reasonId || $reasonText === '') {
+        flash('error', 'กรุณาเลือก/กรอกพนักงาน, กะ, รายการของ, สาเหตุ และวันที่ให้ครบถ้วน');
         redirect('incidents.php?open=add');
     } else {
         $categoryId = null;
@@ -56,12 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
             $categoryId = $itemCategory ? (int) $itemCategory : null;
         }
         $stmt = $pdo->prepare(
-            "INSERT INTO incidents (employee_id, external_name, external_department, item_id, category_id, reason_id, item_name, incident_date, note, recorded_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO incidents (employee_id, external_name, external_department, item_id, category_id, reason_id, reason_text, item_name, incident_date, note, recorded_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $employeeId, $externalName ?: null, $externalDepartment ?: null,
-            $itemId, $categoryId, $reasonId, $itemName, $incidentDate, $note ?: null, current_user()['id'],
+            $itemId, $categoryId, $reasonId, mb_substr($reasonText, 0, 255), $itemName, $incidentDate, $note ?: null, current_user()['id'],
         ]);
         flash('success', 'บันทึกรายการเรียบร้อยแล้ว');
     }
@@ -117,7 +118,7 @@ if ($filterReason !== '') {
     foreach ($reasons as $reason) {
         if ($reason['id'] == $filterReason) { $name = $reason['name']; break; }
     }
-    $activeFilters[] = ['label' => 'สาเหตุ: ' . ($name ?: $filterReason), 'url' => $removeFilterUrl('reason_id')];
+    $activeFilters[] = ['label' => 'กะ: ' . ($name ?: $filterReason), 'url' => $removeFilterUrl('reason_id')];
 }
 if ($filterFrom !== '') {
     $activeFilters[] = ['label' => 'ตั้งแต่ ' . thai_date($filterFrom), 'url' => $removeFilterUrl('date_from')];
@@ -138,8 +139,8 @@ if ($filterReason !== '') { $conditions[] = 'i.reason_id = ?'; $params[] = (int)
 if ($filterFrom !== '') { $conditions[] = 'i.incident_date >= ?'; $params[] = $filterFrom; }
 if ($filterTo !== '') { $conditions[] = 'i.incident_date <= ?'; $params[] = $filterTo; }
 if ($filterKeyword !== '') {
-    $conditions[] = '(i.item_name LIKE ? OR e.full_name LIKE ? OR i.external_name LIKE ?)';
-    $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%";
+    $conditions[] = '(i.item_name LIKE ? OR e.full_name LIKE ? OR i.external_name LIKE ? OR i.reason_text LIKE ?)';
+    $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%"; $params[] = "%$filterKeyword%";
 }
 
 $where = $conditions ? ('WHERE ' . implode(' AND ', $conditions)) : '';
@@ -176,14 +177,14 @@ require __DIR__ . '/../src/views/header.php';
 ?>
 <div class="page-toolbar">
   <button type="button" class="btn btn-primary" data-open-modal="addModal"><?= icon('plus', 'icon icon-sm') ?> บันทึกรายการใหม่</button>
-  <button type="button" class="btn btn-ghost" data-open-modal="reasonsModal"><?= icon('help-circle', 'icon icon-sm') ?> จัดการสาเหตุการไม่เบิก</button>
+  <button type="button" class="btn btn-ghost" data-open-modal="reasonsModal"><?= icon('help-circle', 'icon icon-sm') ?> จัดการกะพนักงาน</button>
 </div>
 
 <div class="panel panel-slim">
   <form method="get" class="filter-bar" data-autosubmit>
     <div class="input-icon filter-search">
       <?= icon('search', 'icon icon-sm') ?>
-      <input type="text" name="q" value="<?= e($filterKeyword) ?>" placeholder="ค้นหาชื่อพนักงาน หรือชื่อของ แล้วกด Enter">
+      <input type="text" name="q" value="<?= e($filterKeyword) ?>" placeholder="ค้นหาชื่อพนักงาน ชื่อของ หรือสาเหตุ แล้วกด Enter">
     </div>
     <button type="button" class="btn btn-ghost" data-menu="advancedFilters" aria-expanded="false">
       <?= icon('filter', 'icon icon-sm') ?> ตัวกรอง
@@ -208,7 +209,7 @@ require __DIR__ . '/../src/views/header.php';
           <?php endforeach; ?>
         </select>
       </label>
-      <label>สาเหตุ
+      <label>กะพนักงาน
         <select name="reason_id">
           <option value="">ทั้งหมด</option>
           <?php foreach ($reasons as $reason): ?>
@@ -242,11 +243,11 @@ require __DIR__ . '/../src/views/header.php';
   <div class="table-wrap">
     <table class="data-table">
       <thead>
-        <tr><th>วันที่</th><th>พนักงาน</th><th>แผนก</th><th>รายการ</th><th>หมวดหมู่</th><th>สาเหตุ</th><th>หมายเหตุ</th><th></th></tr>
+        <tr><th>วันที่</th><th>พนักงาน</th><th>แผนก</th><th>รายการ</th><th>หมวดหมู่</th><th>กะพนักงาน</th><th>สาเหตุ</th><th>หมายเหตุ</th><th></th></tr>
       </thead>
       <tbody>
         <?php if (!$rows): ?>
-          <tr><td colspan="8" class="empty-row"><?= icon('inbox', 'icon icon-lg') ?><span>ไม่พบรายการ</span></td></tr>
+          <tr><td colspan="9" class="empty-row"><?= icon('inbox', 'icon icon-lg') ?><span>ไม่พบรายการ</span></td></tr>
         <?php endif; ?>
         <?php foreach ($rows as $row): ?>
           <tr>
@@ -256,6 +257,7 @@ require __DIR__ . '/../src/views/header.php';
             <td><?= e($row['item_name']) ?></td>
             <td><?= e($row['category_name'] ?? '-') ?></td>
             <td><?= e($row['reason_name'] ?? '-') ?></td>
+            <td><?= e($row['reason_text'] ?? '-') ?></td>
             <td><?= e($row['note'] ?? '') ?></td>
             <td class="row-actions">
               <a href="incident_edit.php?id=<?= $row['id'] ?>" class="link-edit" title="แก้ไข"><?= icon('edit', 'icon icon-sm') ?></a>
@@ -284,23 +286,23 @@ require __DIR__ . '/../src/views/header.php';
 
 <dialog id="reasonsModal" class="modal">
   <div class="modal-head">
-    <h2><?= icon('help-circle', 'icon icon-sm') ?> จัดการสาเหตุการไม่เบิก</h2>
+    <h2><?= icon('help-circle', 'icon icon-sm') ?> จัดการกะพนักงาน</h2>
     <button type="button" class="modal-close" data-close-modal aria-label="ปิด"><?= icon('x', 'icon icon-sm') ?></button>
   </div>
   <div class="modal-body">
     <form method="post" class="filter-form" style="margin-bottom: 16px;">
       <input type="hidden" name="action" value="add_reason">
-      <div class="input-icon input-icon-inline"><?= icon('help-circle', 'icon icon-sm') ?><input type="text" name="reason_name" placeholder="สาเหตุใหม่ เช่น ลืมเบิก, รีบใช้งาน" required></div>
-      <button type="submit" class="btn btn-primary"><?= icon('plus', 'icon icon-sm') ?> เพิ่มสาเหตุ</button>
+      <div class="input-icon input-icon-inline"><?= icon('help-circle', 'icon icon-sm') ?><input type="text" name="reason_name" placeholder="กะใหม่ เช่น กะ4, กะดึก" required></div>
+      <button type="submit" class="btn btn-primary"><?= icon('plus', 'icon icon-sm') ?> เพิ่มกะ</button>
     </form>
     <div class="table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>สาเหตุ</th><th>จำนวนครั้งที่ถูกใช้</th><th></th></tr>
+          <tr><th>กะพนักงาน</th><th>จำนวนครั้งที่ถูกใช้</th><th></th></tr>
         </thead>
         <tbody>
           <?php if (!$reasons): ?>
-            <tr><td colspan="3" class="empty-row"><?= icon('help-circle', 'icon icon-lg') ?><span>ยังไม่มีสาเหตุ</span></td></tr>
+            <tr><td colspan="3" class="empty-row"><?= icon('help-circle', 'icon icon-lg') ?><span>ยังไม่มีกะ</span></td></tr>
           <?php endif; ?>
           <?php foreach ($reasons as $reason): ?>
             <tr>
@@ -363,14 +365,17 @@ require __DIR__ . '/../src/views/header.php';
         </div>
         <p class="field-hint">หมวดหมู่จะยึดตามข้อมูลของชิ้นนั้นในคลังโดยอัตโนมัติ — ถ้าพิมพ์ชื่อใหม่ที่ยังไม่มีในคลัง จะไม่ถูกระบุหมวดหมู่ (ไปเพิ่มของชิ้นนั้นในคลังได้ที่หน้า "คลังของ/อะไหล่")</p>
       </label>
-      <label class="grid-span-2">สาเหตุที่ไม่เบิก
+      <label class="grid-span-2">กะพนักงาน
         <select name="reason_id" required>
-          <option value="">-- เลือกสาเหตุ --</option>
+          <option value="">-- เลือกกะ --</option>
           <?php foreach ($reasons as $reason): ?>
             <option value="<?= $reason['id'] ?>"><?= e($reason['name']) ?></option>
           <?php endforeach; ?>
         </select>
-        <p class="field-hint">ไม่เจอสาเหตุที่ต้องการ? เพิ่มใหม่ได้จากปุ่ม "จัดการสาเหตุการไม่เบิก"</p>
+        <p class="field-hint">ไม่เจอกะที่ต้องการ? เพิ่มใหม่ได้จากปุ่ม "จัดการกะพนักงาน"</p>
+      </label>
+      <label class="grid-span-2">สาเหตุที่ไม่เบิก
+        <input type="text" name="reason_text" maxlength="255" placeholder="พิมพ์สาเหตุ เช่น ลืมเบิก, รีบใช้งาน" required>
       </label>
       <label class="grid-span-2">หมายเหตุ
         <input type="text" name="note" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)">

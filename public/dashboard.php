@@ -29,7 +29,7 @@ $recent = $pdo->query(
      COALESCE(e.department, i.external_department) AS display_department,
      (e.id IS NULL) AS is_external,
      c.name AS category_name,
-     r.name AS reason_name
+     r.name AS reason_name, i.reason_text
      FROM incidents i
      LEFT JOIN employees e ON e.id = i.employee_id
      LEFT JOIN item_categories c ON c.id = i.category_id
@@ -81,7 +81,7 @@ require __DIR__ . '/../src/views/header.php';
   <div class="table-wrap">
     <table class="data-table">
       <thead>
-        <tr><th>วันที่</th><th>พนักงาน</th><th>แผนก</th><th>ของที่ไม่เบิก</th><th>หมวดหมู่</th><th>สาเหตุ</th></tr>
+        <tr><th>วันที่</th><th>พนักงาน</th><th>แผนก</th><th>ของที่ไม่เบิก</th><th>หมวดหมู่</th><th>กะพนักงาน</th><th>สาเหตุ</th></tr>
       </thead>
       <tbody>
         <?php if (!$recent): ?>
@@ -95,6 +95,7 @@ require __DIR__ . '/../src/views/header.php';
             <td><?= e($row['item_name']) ?></td>
             <td><?= e($row['category_name'] ?? '-') ?></td>
             <td><?= e($row['reason_name'] ?? '-') ?></td>
+            <td><?= e($row['reason_text'] ?? '-') ?></td>
           </tr>
         <?php endforeach; ?>
       </tbody>

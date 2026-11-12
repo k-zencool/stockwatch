@@ -7,7 +7,7 @@ $stmt = $pdo->prepare("SELECT * FROM reasons WHERE id = ?");
 $stmt->execute([$id]);
 $reason = $stmt->fetch();
 if (!$reason) {
-    flash('error', 'ไม่พบสาเหตุที่ต้องการแก้ไข');
+    flash('error', 'ไม่พบกะที่ต้องการแก้ไข');
     redirect('incidents.php');
 }
 
@@ -15,22 +15,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_POST['action'] ?? '') === 'delete') {
         $stmt = $pdo->prepare("DELETE FROM reasons WHERE id = ?");
         $stmt->execute([$id]);
-        flash('success', 'ลบสาเหตุเรียบร้อยแล้ว (รายการบันทึกที่เคยใช้สาเหตุนี้จะกลายเป็น "ไม่ระบุสาเหตุ")');
+        flash('success', 'ลบกะเรียบร้อยแล้ว (รายการบันทึกที่เคยใช้กะนี้จะกลายเป็น "ไม่ระบุกะ")');
         redirect('incidents.php');
     }
 
     $name = trim($_POST['name'] ?? '');
     if ($name === '') {
-        flash('error', 'กรุณากรอกชื่อสาเหตุ');
+        flash('error', 'กรุณากรอกชื่อกะ');
     } else {
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM reasons WHERE LOWER(name) = LOWER(?) AND id != ?');
         $stmt->execute([$name, $id]);
         if ((int) $stmt->fetchColumn() > 0) {
-            flash('error', 'มีสาเหตุนี้อยู่แล้ว');
+            flash('error', 'มีกะนี้อยู่แล้ว');
         } else {
             $stmt = $pdo->prepare("UPDATE reasons SET name = ? WHERE id = ?");
             $stmt->execute([$name, $id]);
-            flash('success', 'บันทึกชื่อสาเหตุเรียบร้อยแล้ว');
+            flash('success', 'บันทึกชื่อกะเรียบร้อยแล้ว');
             redirect('incidents.php');
         }
     }
@@ -40,14 +40,14 @@ $stmt = $pdo->prepare('SELECT COUNT(*) FROM incidents WHERE reason_id = ?');
 $stmt->execute([$id]);
 $usageCount = (int) $stmt->fetchColumn();
 
-$pageTitle = 'แก้ไขสาเหตุ';
+$pageTitle = 'แก้ไขกะพนักงาน';
 $activeNav = 'incidents';
 require __DIR__ . '/../src/views/header.php';
 ?>
 <div class="panel">
-  <div class="panel-header"><h2><?= icon('edit', 'icon icon-sm') ?> แก้ไขสาเหตุ</h2></div>
+  <div class="panel-header"><h2><?= icon('edit', 'icon icon-sm') ?> แก้ไขกะพนักงาน</h2></div>
   <form method="post" class="grid-form">
-    <label class="grid-span-2">ชื่อสาเหตุ
+    <label class="grid-span-2">ชื่อกะ
       <input type="text" name="name" value="<?= e($reason['name']) ?>" required>
     </label>
     <div class="grid-span-2">
@@ -59,13 +59,13 @@ require __DIR__ . '/../src/views/header.php';
   <div class="alert alert-error" style="margin-top: 20px;">
     <?= icon('alert-triangle', 'icon icon-sm') ?>
     <span>
-      สาเหตุนี้ถูกใช้ในรายการบันทึกไปแล้ว <?= $usageCount ?> ครั้ง
-      ถ้าลบ รายการบันทึกเหล่านี้จะกลายเป็น "ไม่ระบุสาเหตุ" ทันที (ข้อมูลจะไม่หายไป)
+      กะนี้ถูกใช้ในรายการบันทึกไปแล้ว <?= $usageCount ?> ครั้ง
+      ถ้าลบ รายการบันทึกเหล่านี้จะกลายเป็น "ไม่ระบุกะ" ทันที (ข้อมูลจะไม่หายไป)
     </span>
   </div>
-  <form method="post" class="inline-toggle" onsubmit="return confirm('ยืนยันลบสาเหตุนี้? การกระทำนี้ย้อนกลับไม่ได้');">
+  <form method="post" class="inline-toggle" onsubmit="return confirm('ยืนยันลบกะนี้? การกระทำนี้ย้อนกลับไม่ได้');">
     <input type="hidden" name="action" value="delete">
-    <button type="submit" class="btn btn-danger-outline"><?= icon('trash', 'icon icon-sm') ?> ลบสาเหตุนี้</button>
+    <button type="submit" class="btn btn-danger-outline"><?= icon('trash', 'icon icon-sm') ?> ลบกะนี้</button>
   </form>
 </div>
 <?php require __DIR__ . '/../src/views/footer.php'; ?>

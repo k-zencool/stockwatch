@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS items (
     name VARCHAR(150) NOT NULL,
     category_id INT NULL,
     code VARCHAR(50) NULL,
+    shelf VARCHAR(30) NULL,
     unit VARCHAR(30) NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -57,7 +58,8 @@ CREATE TABLE IF NOT EXISTS incidents (
     external_department VARCHAR(100) NULL,
     item_id INT NULL,
     category_id INT NULL,
-    reason_id INT NULL,
+    reason_id INT NULL,          -- shown as กะพนักงาน (employee shift)
+    reason_text VARCHAR(255) NULL, -- reason typed by the user
     item_name VARCHAR(150) NOT NULL,
     incident_date DATE NOT NULL,
     note TEXT NULL,

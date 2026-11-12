@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $categoryId = ($_POST['category_id'] ?? '') !== '' ? (int) $_POST['category_id'] : null;
     $code = trim($_POST['code'] ?? '');
     $unit = trim($_POST['unit'] ?? '');
+    $shelf = trim($_POST['shelf'] ?? '');
 
     if ($name === '') {
         flash('error', 'กรุณากรอกชื่อของ/อะไหล่');
@@ -30,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt = $pdo->prepare(
-        "UPDATE items SET name=?, category_id=?, code=?, unit=? WHERE id=?"
+        "UPDATE items SET name=?, category_id=?, code=?, shelf=?, unit=? WHERE id=?"
     );
-    $stmt->execute([$name, $categoryId, $code ?: null, $unit ?: null, $id]);
+    $stmt->execute([$name, $categoryId, $code ?: null, $shelf ?: null, $unit ?: null, $id]);
     flash('success', 'บันทึกข้อมูลรายการเรียบร้อยแล้ว');
     redirect('items.php');
 }
