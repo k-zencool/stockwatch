@@ -32,6 +32,7 @@
       <a href="dashboard.php" title="ภาพรวม" class="<?= ($activeNav ?? '') === 'dashboard' ? 'active' : '' ?>"><?= icon('grid') ?><span>ภาพรวม</span></a>
       <a href="incidents.php" title="บันทึกรายการ" class="<?= ($activeNav ?? '') === 'incidents' ? 'active' : '' ?>"><?= icon('clipboard') ?><span>บันทึกรายการ</span></a>
       <a href="items.php" title="คลังของ/อะไหล่" class="<?= ($activeNav ?? '') === 'items' ? 'active' : '' ?>"><?= icon('archive') ?><span>คลังของ/อะไหล่</span></a>
+      <a href="stock.php" title="เช็คสต็อก" class="<?= ($activeNav ?? '') === 'stock' ? 'active' : '' ?>"><?= icon('qr') ?><span>เช็คสต็อก</span></a>
       <a href="employees.php" title="พนักงาน" class="<?= ($activeNav ?? '') === 'employees' ? 'active' : '' ?>"><?= icon('users') ?><span>พนักงาน</span></a>
       <a href="reports.php" title="รายงานสรุป" class="<?= ($activeNav ?? '') === 'reports' ? 'active' : '' ?>"><?= icon('chart') ?><span>รายงานสรุป</span></a>
     </nav>

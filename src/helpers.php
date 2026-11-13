@@ -96,6 +96,8 @@ function icon(string $name, string $class = 'icon'): string
         'tag' => '<path d="M20.59 13.41L13.42 20.58a2 2 0 0 1-2.83 0L2.41 12.4a2 2 0 0 1 0-2.83l7.17-7.17a2 2 0 0 1 2.83 0L20.59 10.6a2 2 0 0 1 0 2.83z"></path><line x1="7" y1="7.01" x2="7.01" y2="6.99"></line>',
         'help-circle' => '<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>',
         'sun' => '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>',
+        'qr' => '<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><line x1="14" y1="14" x2="14" y2="14.01"></line><line x1="17" y1="17" x2="17" y2="17.01"></line><line x1="20" y1="14" x2="20" y2="20"></line><line x1="14" y1="20" x2="17" y2="20"></line>',
+        'camera' => '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle>',
         'moon' => '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>',
     ];
     $body = $icons[$name] ?? '';
@@ -115,4 +117,24 @@ function normalize_employee_code(string $code): string
 {
     $code = trim($code);
     return preg_match('/^[\s\-–—_.]*$/u', $code) ? '' : $code;
+}
+
+/** "13 พ.ย. 2569 14:05" in Thai time for a UTC DATETIME from the database. */
+function thai_datetime(?string $utc): string
+{
+    if (!$utc) {
+        return '-';
+    }
+    $dt = new DateTime($utc, new DateTimeZone('UTC'));
+    $dt->setTimezone(new DateTimeZone('Asia/Bangkok'));
+    return thai_date($dt->format('Y-m-d')) . ' ' . $dt->format('H:i');
+}
+
+/** Absolute URL of the shelf count page; this is what the shelf QR code encodes. */
+function shelf_url(string $shelf): string
+{
+    $https = (($_SERVER['HTTPS'] ?? '') !== '' && ($_SERVER['HTTPS'] ?? '') !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    return ($https ? 'https' : 'http') . '://' . $host . '/shelf.php?s=' . rawurlencode($shelf);
 }
