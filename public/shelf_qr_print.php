@@ -8,13 +8,6 @@ $shelves = array_values(array_unique(array_filter(array_map(
 ), fn ($s) => $s !== '')));
 natcasesort($shelves);
 
-$counts = [];
-if ($shelves) {
-    $in = implode(',', array_fill(0, count($shelves), '?'));
-    $stmt = $pdo->prepare("SELECT shelf, COUNT(*) c FROM items WHERE is_active = 1 AND shelf IN ($in) GROUP BY shelf");
-    $stmt->execute(array_values($shelves));
-    $counts = array_column($stmt->fetchAll(), 'c', 'shelf');
-}
 ?>
 <!doctype html>
 <html lang="th" data-theme="light">
@@ -38,7 +31,6 @@ if ($shelves) {
     <div class="qr-label">
       <div class="qr-code" data-url="<?= e(shelf_url($s)) ?>"></div>
       <div class="qr-shelf"><?= e($s) ?></div>
-      <div class="qr-meta"><?= (int) ($counts[$s] ?? 0) ?> รายการ · สแกนเพื่อนับสต็อก</div>
     </div>
   <?php endforeach; ?>
 </div>
