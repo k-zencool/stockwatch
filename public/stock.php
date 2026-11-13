@@ -49,7 +49,10 @@ require __DIR__ . '/../src/views/header.php';
 <form method="get" action="shelf_qr_print.php" target="_blank" class="panel">
   <div class="panel-header">
     <h2><?= icon('qr', 'icon icon-sm') ?> ช่องเก็บของ (<?= count($shelves) ?>)</h2>
-    <button type="submit" class="btn btn-ghost" id="printSelected" disabled><?= icon('printer', 'icon icon-sm') ?> ปริ้น QR ที่เลือก</button>
+    <div class="panel-actions">
+      <button type="submit" class="btn btn-ghost" id="printSelected" disabled><?= icon('printer', 'icon icon-sm') ?> ปริ้น QR ที่เลือก</button>
+      <a href="shelf_qr_print.php?all=1" target="_blank" class="btn btn-ghost"><?= icon('printer', 'icon icon-sm') ?> ปริ้นทุกช่อง</a>
+    </div>
   </div>
   <div class="table-wrap">
     <table class="data-table">

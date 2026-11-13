@@ -1123,16 +1123,15 @@ dialog.modal[open] { animation: popIn 0.2s var(--ease); display: flex; flex-dire
 .scan-view video { width: 100%; height: 100%; object-fit: cover; }
 .scan-frame { position: absolute; inset: 18%; border: 3px solid rgba(255,255,255,.85); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
 
-/* Shelf QR labels (shelf_qr_print.php): card with shelf name on top, QR, dark scan strip. */
-.qr-sheet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; max-width: 190mm; margin: 0 auto; padding: 0 16px 32px; }
-.qr-label { display: flex; flex-direction: column; align-items: center; overflow: hidden; border: 0.5mm solid #102532; border-radius: 4mm;
-  background: #fff; break-inside: avoid; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.qr-top { margin-top: 4mm; font-size: 12px; font-weight: 600; color: #6b7c88; }
-.qr-shelf { margin: 1mm 0 3mm; font-size: 34px; font-weight: 700; line-height: 1; color: #102532; }
-.qr-code { width: 38mm; height: 38mm; margin-bottom: 4mm; }
+/* Shelf QR labels (shelf_qr_print.php): square cells sharing one cut line, 3 per row on A4. */
+.qr-sheet { display: grid; grid-template-columns: repeat(3, 60mm); margin: 0 auto 32px;
+  border-top: 0.3mm solid #000; border-left: 0.3mm solid #000; width: max-content; }
+.qr-label { box-sizing: border-box; width: 60mm; height: 60mm; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm;
+  border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; background: #fff; break-inside: avoid; page-break-inside: avoid; }
+.qr-shelf { font-size: 30px; font-weight: 700; line-height: 1; color: #000; }
+.qr-code { width: 40mm; height: 40mm; }
 .qr-code svg { width: 100%; height: 100%; display: block; }
-.qr-foot { align-self: stretch; padding: 2mm 0; background: #102532; color: #fff; font-size: 11px; font-weight: 600; text-align: center; }
-@media print { .qr-sheet { padding: 0; } @page { margin: 10mm; } }
+@media print { .qr-sheet { margin: 0 auto; } @page { size: A4; margin: 10mm; } }
 
 /* Mobile bottom nav: raised scan button + "เมนู" bottom sheet */
 .bottom-nav { align-items: flex-end; }
@@ -1162,3 +1161,5 @@ dialog.sheet::backdrop { background: rgba(8, 15, 22, 0.45); }
 @media (pointer: coarse) {
   input, select, textarea { font-size: 16px !important; }
 }
+
+.panel-actions { display: flex; flex-wrap: wrap; gap: 8px; }

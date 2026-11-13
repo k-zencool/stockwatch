@@ -2,10 +2,14 @@
 require_once __DIR__ . '/../src/auth.php';
 require_login();
 
-$shelves = array_values(array_unique(array_filter(array_map(
-    fn ($s) => trim((string) $s),
-    (array) ($_GET['s'] ?? [])
-), fn ($s) => $s !== '')));
+// Shelf names always come from items.shelf; ?all=1 prints every shelf, ?s[]=... only those picked.
+$shelves = $pdo->query(
+    "SELECT DISTINCT shelf FROM items WHERE is_active = 1 AND shelf IS NOT NULL AND shelf <> ''"
+)->fetchAll(PDO::FETCH_COLUMN);
+if (empty($_GET['all'])) {
+    $picked = array_map(fn ($v) => trim((string) $v), (array) ($_GET['s'] ?? []));
+    $shelves = array_values(array_intersect($shelves, $picked));
+}
 natcasesort($shelves);
 
 ?>
@@ -30,10 +34,8 @@ natcasesort($shelves);
 <div class="qr-sheet">
   <?php foreach ($shelves as $s): ?>
     <div class="qr-label">
-      <div class="qr-top">ช่องเก็บของ</div>
       <div class="qr-shelf"><?= e($s) ?></div>
       <div class="qr-code" data-url="<?= e(shelf_url($s)) ?>"></div>
-      <div class="qr-foot">สแกนเพื่อนับสต็อก</div>
     </div>
   <?php endforeach; ?>
 </div>
