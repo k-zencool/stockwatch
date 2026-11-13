@@ -158,6 +158,12 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(function () { status.textContent = 'เปิดกล้องไม่ได้ — กดอนุญาตให้ใช้กล้องในการตั้งค่าเบราว์เซอร์ก่อน'; });
   });
+
+  // Opened from the scan button in the mobile bottom nav.
+  if (new URLSearchParams(location.search).get('scan') === '1') {
+    history.replaceState(null, '', 'stock.php');
+    document.getElementById('scanBtn').click();
+  }
 });
 </script>
 <?php require __DIR__ . '/../src/views/footer.php'; ?>

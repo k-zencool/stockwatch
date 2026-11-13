@@ -532,3 +532,18 @@ document.addEventListener('DOMContentLoaded', function () {
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (type) {
   document.addEventListener(type, function (e) { e.preventDefault(); }, { passive: false });
 });
+
+// Mobile "เมนู" bottom sheet (footer.php).
+document.addEventListener('DOMContentLoaded', function () {
+  var sheet = document.getElementById('moreMenu');
+  var btn = document.getElementById('moreMenuBtn');
+  if (!sheet || !btn || !sheet.showModal) return;
+  btn.addEventListener('click', function () { sheet.showModal(); });
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.close(); });
+  sheet.querySelectorAll('[data-sheet-close]').forEach(function (b) {
+    b.addEventListener('click', function () { sheet.close(); });
+  });
+  var theme = document.getElementById('sheetTheme');
+  var toggle = document.getElementById('themeToggle');
+  if (theme && toggle) theme.addEventListener('click', function () { toggle.click(); });
+});
