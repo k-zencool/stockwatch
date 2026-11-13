@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <script>(function(){try{var t=localStorage.getItem('kp_theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title><?= e($pageTitle ?? 'ระบบติดตามการเบิกของ') ?></title>
 <meta name="theme-color" content="#102532" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0f16" media="(prefers-color-scheme: dark)">

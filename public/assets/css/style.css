@@ -178,7 +178,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; } /* no double-tap zoom */
 body {
   margin: 0;
   font-family: var(--font);
@@ -1102,4 +1102,9 @@ dialog.modal[open] { animation: popIn 0.2s var(--ease); display: flex; flex-dire
 /* Installed as an app (standalone window): tighten the chrome a little. */
 @media (display-mode: standalone) {
   .topbar { padding-top: calc(10px + env(safe-area-inset-top)); }
+}
+
+/* Phones: iOS zooms into any field under 16px on focus, so keep fields at 16px there. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
 }

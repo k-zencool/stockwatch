@@ -527,3 +527,8 @@ document.addEventListener('DOMContentLoaded', function () {
   window.addEventListener('offline', updateOnline);
   document.addEventListener('DOMContentLoaded', updateOnline);
 })();
+
+// App-like on phones: block iOS pinch-zoom (Safari ignores user-scalable=no).
+['gesturestart', 'gesturechange', 'gestureend'].forEach(function (type) {
+  document.addEventListener(type, function (e) { e.preventDefault(); }, { passive: false });
+});
