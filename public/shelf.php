@@ -56,7 +56,8 @@ require __DIR__ . '/../src/views/header.php';
 <form method="post" class="panel">
   <input type="hidden" name="s" value="<?= e($shelf) ?>">
   <div class="panel-header">
-    <h2><?= icon('archive', 'icon icon-sm') ?> ช่อง <?= e($shelf) ?> (<?= count($items) ?> รายการ)</h2>
+    <h2><?= icon('archive', 'icon icon-sm') ?> ช่อง <?= e($shelf) ?></h2>
+    <span class="badge badge-info" id="countProgress">ต้องนับ <?= count($items) ?> รายการ</span>
   </div>
   <div class="count-list">
     <?php foreach ($items as $it): ?>
@@ -76,4 +77,19 @@ require __DIR__ . '/../src/views/header.php';
   </div>
 </form>
 <?php endif; ?>
+<script>
+// Live "กรอกแล้ว x/N" so the counter knows how many items in this shelf are left.
+(function () {
+  var inputs = document.querySelectorAll('.count-input');
+  var badge = document.getElementById('countProgress');
+  if (!badge || !inputs.length) return;
+  function update() {
+    var done = 0;
+    inputs.forEach(function (i) { if (i.value !== '') done++; });
+    badge.textContent = done ? 'กรอกแล้ว ' + done + '/' + inputs.length + ' รายการ' : 'ต้องนับ ' + inputs.length + ' รายการ';
+    badge.className = 'badge ' + (done === inputs.length ? 'badge-success' : 'badge-info');
+  }
+  inputs.forEach(function (i) { i.addEventListener('input', update); });
+})();
+</script>
 <?php require __DIR__ . '/../src/views/footer.php'; ?>
