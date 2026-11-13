@@ -17,6 +17,7 @@ natcasesort($shelves);
 <title>QR ช่องเก็บของ</title>
 <link rel="icon" type="image/svg+xml" href="<?= asset('assets/favicon.svg') ?>">
 <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>">
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
 <body class="print-body">
@@ -29,8 +30,10 @@ natcasesort($shelves);
 <div class="qr-sheet">
   <?php foreach ($shelves as $s): ?>
     <div class="qr-label">
-      <div class="qr-code" data-url="<?= e(shelf_url($s)) ?>"></div>
+      <div class="qr-top">ช่องเก็บของ</div>
       <div class="qr-shelf"><?= e($s) ?></div>
+      <div class="qr-code" data-url="<?= e(shelf_url($s)) ?>"></div>
+      <div class="qr-foot">สแกนเพื่อนับสต็อก</div>
     </div>
   <?php endforeach; ?>
 </div>
