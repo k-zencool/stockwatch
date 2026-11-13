@@ -2,7 +2,7 @@
  * Pages are always fetched from the network (they are per-user and change on every
  * write); only when the network fails do we show the offline page. Static assets are
  * served cache-first and refreshed in the background. Bump VERSION to drop old caches. */
-const VERSION = 'sw-v8';
+const VERSION = 'sw-v7';
 const STATIC_CACHE = 'stockwatch-static-' + VERSION;
 const PRECACHE = [
   '/offline.html',
